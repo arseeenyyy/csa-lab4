@@ -47,6 +47,11 @@
   - `or`
   - `swap`
   - `invert`
+  - `=`
+  - `do loop`
+  - `!`
+  - `@`
+  - `key`
   - todo later
 ## Translator
   - *todo*
