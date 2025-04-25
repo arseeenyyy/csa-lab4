@@ -36,38 +36,18 @@
 ### CPU Memory Model
   - *todo later...*
 ## ISA 
-  - **Literal**
-    - syntax: `lit <value>`
-    - descrp: push an immediate value onto the data stack.
-    - operation: `stack.push(<value>)`
-  - **Dup**
-    - syntax: `dup`
-    - descrp: duplicate top value of stack
-    - operation: `stack.push(stack.top())`
-  - **Drop**
-    - syntax: `drop`
-    - descrp: drop top value of stack
-    - operation: `stack.pop()`
-  - **Add**
-    - syntax: `+`
-    - descrp: add the top two values on the stack
-    - operation: `stack.push(stack.pop() + stack.pop())`
-  - **And**
-    - syntax: `and`
-    - descrp: perform a bitwise AND on top two values of stack
-    - operation: `stack.push(stack.pop() && stack.pop())`
-  - **Or**
-    - syntax: `or`
-    - descrp: perform a bitwise OR on top two values of stack
-    - operation: `stack.push(stack.pop() || stack.pop())`
-  - **For loop**
-    - syntax: `do loop`
-    - descrp: --
-    - operation: --
-  - **Not**
-    - syntax: `invert`
-    - descrp: perform bitwise invertion on top value of stack
-    - operation: `stack.push(not(stack.pop))`
+  - `lit <value>` - push an immediate value onto the stack
+  - `dup` - duplicate top value of the stack
+  - `drop` - drop top value of the stack
+  - `+` - add top two values on the stack
+  - `-` - substact top two values on the stack
+  - `*` - multiply top two values on the stack
+  - `/` - divide top two values on the stack
+  - `and`
+  - `or`
+  - `swap`
+  - `invert`
+  - todo later
 ## Translator
   - *todo*
 ## CPU Model
