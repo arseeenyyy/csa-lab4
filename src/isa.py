@@ -45,13 +45,17 @@ binary_to_opcode = {
 }
 
 class Instruction: 
-    def __init__(self, opcode: Opcode, arg: int = 0): 
-        self.opcode: Opcode = opcode 
-        self.arg: int = arg
+    def __init__(self, opcode: Opcode, arg: int = 0):
+        self.opcode = opcode
+        self.arg = arg
 
-    def __str__(self): 
-        return f"({self.opcode} {self.arg})" 
-
+    def __str__(self):
+        arg_ops = {Opcode.LIT}  
+        
+        if self.opcode in arg_ops:
+            return f"{self.opcode.value} {self.arg}"
+        return f"{self.opcode.value}"
+    
 def to_bytes(instructions: list[Instruction]) -> bytes: 
     binary_bytes = bytearray()
     for instr in instructions:
@@ -87,9 +91,9 @@ def from_bytes(binary: bytes) -> list[Instruction]:
 def main(): 
     program = [
         Instruction(Opcode.LIT, 42),
-        Instruction(Opcode.DUP, 0),
-        Instruction(Opcode.ADD, 0),
-        Instruction(Opcode.HALT, 0)
+        Instruction(Opcode.DUP),
+        Instruction(Opcode.ADD),
+        Instruction(Opcode.HALT)
     ]
     binary = to_bytes(program)
     print(binary.hex(' '))

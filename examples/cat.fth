@@ -1,8 +1,8 @@
 : cat
     begin
-       key
-       dup
-       emit
-    0 = until
+       key \ comment section 1
+       dup 
+       emit \ comment section 2
+    0 = until ( comment section 3 )
 ;
 cat
