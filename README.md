@@ -49,9 +49,13 @@
   - `invert`
   - `=`
   - `do loop`
-  - `!`
-  - `@`
+  - `!` - store the second value of the stack by address on the top of the stack
+  - `@`- push the value on the stack from address on the top of the stack
   - `key`
+  - `.`
+  - `." <str>"`
+  - `emit` 
+  - `variable <var_name>` - define variable
   - todo later
 ## Translator
   - *todo*

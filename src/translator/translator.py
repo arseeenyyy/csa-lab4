@@ -1,2 +1,2 @@
-def translate():
-    pass
+from isa.isa import Opcode 
+import sys
