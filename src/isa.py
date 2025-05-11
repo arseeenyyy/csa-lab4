@@ -180,10 +180,9 @@ def main():
         Instruction(Opcode.HALT)        
     ]
     binary = to_bytes(program)
-    print("Бинарный код (hex):", binary.hex(' '))
+    print(binary.hex(' '))
     
     decompiled = from_bytes(binary)
-    print("Декомпилировано:")
     for instr in decompiled:
         print(f"  {instr}")
 
