@@ -35,6 +35,8 @@ class Opcode(str, Enum):
     DO = "do"
     LOOP = "loop"
     CALL = "call"
+    BEGIN = "begin"
+    UNTIL = "until"
     # system operations
     HALT = "halt"
     NOP = "nop" # just for padding
@@ -72,6 +74,8 @@ opcode_to_binary = {
     Opcode.DO: 0x43,
     Opcode.LOOP: 0x44,
     Opcode.CALL: 0x45,
+    Opcode.BEGIN: 0x46,
+    Opcode.UNTIL: 0x47,
     Opcode.HALT: 0xFF,
     Opcode.NOP: 0x00  
 }
@@ -106,6 +110,8 @@ binary_to_opcode = {
     0x43: Opcode.DO,
     0x44: Opcode.LOOP,
     0x45: Opcode.CALL,
+    0x46: Opcode.BEGIN, 
+    0x47: Opcode.UNTIL,
     0xFF: Opcode.HALT
 }
 
