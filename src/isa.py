@@ -132,65 +132,57 @@ def to_bytes(instructions: list[Instruction]) -> bytes:
     while i < len(instructions):
         if instructions[i].opcode in arg_ops:
             opcode = opcode_to_binary[instructions[i].opcode]
-            arg = instructions[i].arg & 0xFFFFFF  
+            arg = instructions[i].arg & 0xFFFFFF
             word = (opcode << 24) | arg
             binary_bytes.extend(
                 ((word >> 24) & 0xFF, (word >> 16) & 0xFF, (word >> 8) & 0xFF, word & 0xFF)
             )
             i += 1
         else:
-            
             word = 0
+            count = 0
             for j in range(4):
                 if i + j < len(instructions) and instructions[i + j].opcode not in arg_ops:
-                    opcode = opcode_to_binary[instructions[i + j].opcode]  
+                    opcode = opcode_to_binary[instructions[i + j].opcode]
                     word |= opcode << (24 - j * 8)
+                    count += 1
                 else:
-                    word |= 0x00 << (24 - j * 8)  
+                    break  
             binary_bytes.extend(
                 ((word >> 24) & 0xFF, (word >> 16) & 0xFF, (word >> 8) & 0xFF, word & 0xFF)
             )
-            i += min(4, len(instructions) - i)
+            i += count  
 
     return bytes(binary_bytes)
 
 def from_bytes(binary: bytes) -> list[Instruction]:
     instructions = []
-
-    for i in range(0, len(binary), 4):
+    i = 0
+    while i < len(binary):
         if i + 3 >= len(binary):
             break
         word = (binary[i] << 24) | (binary[i + 1] << 16) | (binary[i + 2] << 8) | binary[i + 3]
-        
         first_opcode = binary_to_opcode.get((word >> 24) & 0xFF, Opcode.NOP)
+        
         if first_opcode in arg_ops:
             arg = word & 0xFFFFFF
             instructions.append(Instruction(first_opcode, arg))
+            i += 4
         else:
             for j in range(4):
                 opcode_bin = (word >> (24 - j * 8)) & 0xFF
-                if opcode_bin == 0x00:  
+                if opcode_bin == 0x00 and j > 0:  
                     continue
                 opcode = binary_to_opcode.get(opcode_bin, Opcode.NOP)
+                if opcode in arg_ops:
+                    if i + 4 < len(binary):
+                        next_word = (binary[i + 4] << 24) | (binary[i + 5] << 16) | \
+                                   (binary[i + 6] << 8) | binary[i + 7]
+                        arg = next_word & 0xFFFFFF
+                        instructions.append(Instruction(opcode, arg))
+                        i += 4
+                    break
                 instructions.append(Instruction(opcode))
+            i += 4
 
     return instructions
-
-def main():
-    program = [
-        Instruction(Opcode.LIT, 42),    
-        Instruction(Opcode.DUP),        
-        Instruction(Opcode.DUP),        
-        Instruction(Opcode.ADD),        
-        Instruction(Opcode.PRINT_INT),  
-        Instruction(Opcode.HALT)        
-    ]
-    binary = to_bytes(program)
-    print(binary.hex(' '))
-    
-    decompiled = from_bytes(binary)
-    for instr in decompiled:
-        print(f"  {instr}")
-
-if __name__ == "__main__":
-    main()
