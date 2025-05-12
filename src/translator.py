@@ -126,6 +126,33 @@ def check_closing_brackets(terms: list[str]) -> Tuple[bool, Optional[str]]:
         return False, f"error with smth else"
     return True, None
 
+def split_programm(text: str) -> List[str]:
+    text = remove_comments(text)
+    
+    words = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:  
+            continue
+        words.extend(token for token in line.split() if token)
+    
+    return words
+# def text2terms(text: str) -> Optional[list[str]]:
+#     text = remove_comments(text)
+
+
+
+
+def main(source: str):
+    with open(source, encoding="utf-8") as file:
+        text = file.read()
+        programm = split_programm(text)
+        print(programm)
+        res, pr = check_closing_brackets(programm)
+        print(res)
+        print(pr)
+if __name__ == "__main__":
+    main("examples/cat.fth")
 # def main(source, target): 
 #     with open(source, encoding="utf-8") as file: 
 #         text = file.read() 
