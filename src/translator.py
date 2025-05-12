@@ -1,5 +1,5 @@
 import sys, os
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, List, Tuple
 from isa import Opcode, Instruction, from_bytes, to_bytes
 
 def symbol_2_instruction(symbol: str) -> Optional[List[Instruction]]: 
