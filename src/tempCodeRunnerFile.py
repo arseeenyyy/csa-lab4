@@ -1,2 +1,0 @@
-        print(res)
-        print(pr)
