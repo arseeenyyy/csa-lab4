@@ -28,7 +28,61 @@
 ## Programming Language
 
 ### Syntax
-- *This section will be filled later...*
+```ebnf
+<program> ::= <instruction>* 
+            | <definition>*
+
+<instruction> ::= <stack_op> 
+                | <math_op> 
+                | <logic_op>
+                | <memory_op> 
+                | <control_op> 
+                | <literal> 
+                | <variable> 
+                | <call>  
+
+<definition> ::= ":" <name> <instruction>* ";"
+
+<stack_op> ::= "dup" 
+             | "drop" 
+             | "swap" 
+             | "over"
+             | <number>
+
+<math_op> ::= "+" 
+            | "-" 
+            | "*" 
+            | "/" 
+            | "mod"
+
+<logic_op> ::= "and" 
+             | "xor" 
+             | "or" 
+             | "=" 
+             | ">" 
+             | "<"
+
+<memory_op> ::= "!" 
+              | "@" 
+              | "variable"
+
+<control_op> ::= "if" 
+               | "else" 
+               | "then" 
+               | "do" 
+               | "loop" 
+               | "begin" 
+               | "until"
+
+<number> ::= "-"? <digit>+
+
+<name> ::= <letter> (<letter> | <digit>)*
+
+<digit> ::= [0-9]
+
+<letter> ::= [a-zA-Z]
+```
+
 ### Semantics
 - *This section will be filled later...*
 
