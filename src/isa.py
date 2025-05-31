@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Union
 
 class Opcode(str, Enum):
     # base operations
@@ -38,6 +39,7 @@ class Opcode(str, Enum):
     BEGIN = "begin"
     UNTIL = "until"
     # system operations
+    LOAD_MEM = "load_mem",
     RET = ";"
     HALT = "halt"
     NOP = "nop" # just for padding
@@ -77,6 +79,7 @@ opcode_to_binary = {
     Opcode.CALL: 0x45,
     Opcode.BEGIN: 0x46,
     Opcode.UNTIL: 0x47,
+    Opcode.LOAD_MEM: 0x50,
     Opcode.RET: 0xFE,
     Opcode.HALT: 0xFF,
     Opcode.NOP: 0x00  
@@ -113,20 +116,21 @@ binary_to_opcode = {
     0x44: Opcode.LOOP,
     0x45: Opcode.CALL,
     0x46: Opcode.BEGIN, 
+    0x50: Opcode.LOAD_MEM,
     0x47: Opcode.UNTIL,
     0xFE: Opcode.RET,
     0xFF: Opcode.HALT
 }
 
-arg_ops = {Opcode.LIT, Opcode.CALL}
+arg_ops = {Opcode.LIT, Opcode.CALL, Opcode.LOAD_MEM} 
 
 
 class Instruction: 
-    def __init__(self, opcode: Opcode, arg: int = 0): 
+    def __init__(self, opcode: Opcode, arg: Union[int, str] = None): 
         self.opcode = opcode 
         self.arg = arg
     def __str__(self): 
-        if self.opcode not in arg_ops: 
+        if self.arg is None: 
             return f"{self.opcode.value}"
         return f"{self.opcode.value} {self.arg}"
 
