@@ -27,7 +27,7 @@ class Opcode(str, Enum):
     PRINT_INT = "."
     EMIT = "emit"
     KEY = "key"
-    PRINT_STRING = '."'
+    # PRINT_STRING = '."'
     # flow control
     IF = "if"
     ELSE = "else"
@@ -38,6 +38,7 @@ class Opcode(str, Enum):
     BEGIN = "begin"
     UNTIL = "until"
     # system operations
+    RET = ";"
     HALT = "halt"
     NOP = "nop" # just for padding
 
@@ -67,7 +68,7 @@ opcode_to_binary = {
     Opcode.PRINT_INT: 0x30,
     Opcode.EMIT: 0x31,
     Opcode.KEY: 0x32,
-    Opcode.PRINT_STRING: 0x33,
+    # Opcode.PRINT_STRING: 0x33,
     Opcode.IF: 0x40,
     Opcode.ELSE: 0x41,
     Opcode.THEN: 0x42,
@@ -76,6 +77,7 @@ opcode_to_binary = {
     Opcode.CALL: 0x45,
     Opcode.BEGIN: 0x46,
     Opcode.UNTIL: 0x47,
+    Opcode.RET: 0xFE,
     Opcode.HALT: 0xFF,
     Opcode.NOP: 0x00  
 }
@@ -103,7 +105,7 @@ binary_to_opcode = {
     0x30: Opcode.PRINT_INT,
     0x31: Opcode.EMIT,
     0x32: Opcode.KEY,
-    0x33: Opcode.PRINT_STRING,
+    # 0x33: Opcode.PRINT_STRING,
     0x40: Opcode.IF,
     0x41: Opcode.ELSE,
     0x42: Opcode.THEN,
@@ -112,10 +114,12 @@ binary_to_opcode = {
     0x45: Opcode.CALL,
     0x46: Opcode.BEGIN, 
     0x47: Opcode.UNTIL,
+    0xFE: Opcode.RET,
     0xFF: Opcode.HALT
 }
 
-arg_ops = {Opcode.LIT, Opcode.CALL, Opcode.PRINT_STRING}
+arg_ops = {Opcode.LIT, Opcode.CALL}
+
 
 class Instruction: 
     def __init__(self, opcode: Opcode, arg: int = 0): 
@@ -126,63 +130,48 @@ class Instruction:
             return f"{self.opcode.value}"
         return f"{self.opcode.value} {self.arg}"
 
-def to_bytes(instructions: list[Instruction]) -> bytes:
-    binary_bytes = bytearray()
-    i = 0
-    while i < len(instructions):
-        if instructions[i].opcode in arg_ops:
-            opcode = opcode_to_binary[instructions[i].opcode]
-            arg = instructions[i].arg & 0xFFFFFF
-            word = (opcode << 24) | arg
-            binary_bytes.extend(
-                ((word >> 24) & 0xFF, (word >> 16) & 0xFF, (word >> 8) & 0xFF, word & 0xFF)
-            )
-            i += 1
-        else:
-            word = 0
-            count = 0
-            for j in range(4):
-                if i + j < len(instructions) and instructions[i + j].opcode not in arg_ops:
-                    opcode = opcode_to_binary[instructions[i + j].opcode]
-                    word |= opcode << (24 - j * 8)
-                    count += 1
-                else:
-                    break  
-            binary_bytes.extend(
-                ((word >> 24) & 0xFF, (word >> 16) & 0xFF, (word >> 8) & 0xFF, word & 0xFF)
-            )
-            i += count  
+def to_bytes(instructions: list[Instruction]) -> bytes: 
+    binary = bytearray()
+    for instr in instructions: 
+        opcode_byte = opcode_to_binary[instr.opcode] 
 
-    return bytes(binary_bytes)
+        if instr.opcode in arg_ops: 
+            arg = instr.arg
+            binary.extend([
+                opcode_byte, 
+                (arg >> 16) & 0xFF, 
+                (arg >> 8) & 0xFF, 
+                arg & 0xFF
+            ])
+        else: 
+            binary.append(opcode_byte)
+    return bytes(binary)
 
-def from_bytes(binary: bytes) -> list[Instruction]:
+def from_bytes(binary: bytes) -> list[Instruction]: 
     instructions = []
     i = 0
-    while i < len(binary):
-        if i + 3 >= len(binary):
-            break
-        word = (binary[i] << 24) | (binary[i + 1] << 16) | (binary[i + 2] << 8) | binary[i + 3]
-        first_opcode = binary_to_opcode.get((word >> 24) & 0xFF, Opcode.NOP)
-        
-        if first_opcode in arg_ops:
-            arg = word & 0xFFFFFF
-            instructions.append(Instruction(first_opcode, arg))
-            i += 4
-        else:
-            for j in range(4):
-                opcode_bin = (word >> (24 - j * 8)) & 0xFF
-                if opcode_bin == 0x00 and j > 0:  
-                    continue
-                opcode = binary_to_opcode.get(opcode_bin, Opcode.NOP)
-                if opcode in arg_ops:
-                    if i + 4 < len(binary):
-                        next_word = (binary[i + 4] << 24) | (binary[i + 5] << 16) | \
-                                   (binary[i + 6] << 8) | binary[i + 7]
-                        arg = next_word & 0xFFFFFF
-                        instructions.append(Instruction(opcode, arg))
-                        i += 4
-                    break
-                instructions.append(Instruction(opcode))
-            i += 4
+    while i < len(binary): 
+        opcode_byte = binary[i]
+        opcode = binary_to_opcode.get(opcode_byte) 
 
+        if opcode in arg_ops: 
+            if i + 3 >= len(binary): 
+                break
+            arg = (binary[i + 1] << 16) | (binary[i + 2] << 8) | binary[i + 3]
+            instructions.append(Instruction(opcode, arg))
+            i += 4
+        else: 
+            instructions.append(Instruction(opcode))
+            i += 1
     return instructions
+
+def main():
+    instructions = [Instruction(Opcode.DUP), Instruction(Opcode.LIT, 42), Instruction(Opcode.DUP), Instruction(Opcode.DUP)]
+    byt = to_bytes(instructions)
+    instr2 = from_bytes(byt) 
+    for i in range(len(instr2)): 
+        if (instr2[i].opcode in arg_ops): 
+            print(f"{instr2[i].opcode} {instr2[i].arg}")
+        else: print(instr2[i].opcode)
+if __name__ == "__main__": 
+    main()

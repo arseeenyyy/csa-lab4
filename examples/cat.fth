@@ -6,4 +6,3 @@
     0 = until ( comment section 3 )
 ;
 cat
-halt
