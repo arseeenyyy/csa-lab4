@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union
+from collections import namedtuple
 
 class Opcode(str, Enum):
     # base operations
@@ -39,7 +39,7 @@ class Opcode(str, Enum):
     BEGIN = "begin"
     UNTIL = "until"
     # system operations
-    LOAD_MEM = "load_mem",
+    LOAD_ADDR = "load_addr",
     RET = ";"
     HALT = "halt"
     NOP = "nop" # just for padding
@@ -79,7 +79,7 @@ opcode_to_binary = {
     Opcode.CALL: 0x45,
     Opcode.BEGIN: 0x46,
     Opcode.UNTIL: 0x47,
-    Opcode.LOAD_MEM: 0x50,
+    Opcode.LOAD_ADDR: 0x50,
     Opcode.RET: 0xFE,
     Opcode.HALT: 0xFF,
     Opcode.NOP: 0x00  
@@ -116,66 +116,31 @@ binary_to_opcode = {
     0x44: Opcode.LOOP,
     0x45: Opcode.CALL,
     0x46: Opcode.BEGIN, 
-    0x50: Opcode.LOAD_MEM,
+    0x50: Opcode.LOAD_ADDR,
     0x47: Opcode.UNTIL,
     0xFE: Opcode.RET,
     0xFF: Opcode.HALT
 }
 
-arg_ops = {Opcode.LIT, Opcode.CALL, Opcode.LOAD_MEM} 
+arg_ops = {Opcode.LIT, Opcode.CALL, Opcode.LOAD_ADDR} 
 
 
-class Instruction: 
-    def __init__(self, opcode: Opcode, arg: Union[int, str] = None): 
-        self.opcode = opcode 
-        self.arg = arg
-    def __str__(self): 
-        if self.arg is None: 
-            return f"{self.opcode.value}"
-        return f"{self.opcode.value} {self.arg}"
+class Term(namedtuple("Term", "line pos word")): 
+    """
+    Описание выражения из исходного текста программы
+    """
 
-def to_bytes(instructions: list[Instruction]) -> bytes: 
-    binary = bytearray()
-    for instr in instructions: 
-        opcode_byte = opcode_to_binary[instr.opcode] 
 
-        if instr.opcode in arg_ops: 
-            arg = instr.arg
-            binary.extend([
-                opcode_byte, 
-                (arg >> 16) & 0xFF, 
-                (arg >> 8) & 0xFF, 
-                arg & 0xFF
-            ])
-        else: 
-            binary.append(opcode_byte)
-    return bytes(binary)
+def to_bytes(code): 
+    pass
 
-def from_bytes(binary: bytes) -> list[Instruction]: 
-    instructions = []
-    i = 0
-    while i < len(binary): 
-        opcode_byte = binary[i]
-        opcode = binary_to_opcode.get(opcode_byte) 
+def to_hex(code): 
+    pass
 
-        if opcode in arg_ops: 
-            if i + 3 >= len(binary): 
-                break
-            arg = (binary[i + 1] << 16) | (binary[i + 2] << 8) | binary[i + 3]
-            instructions.append(Instruction(opcode, arg))
-            i += 4
-        else: 
-            instructions.append(Instruction(opcode))
-            i += 1
-    return instructions
+def from_bytes(binary_code): 
+    pass
 
 def main():
-    instructions = [Instruction(Opcode.DUP), Instruction(Opcode.LIT, 42), Instruction(Opcode.DUP), Instruction(Opcode.DUP)]
-    byt = to_bytes(instructions)
-    instr2 = from_bytes(byt) 
-    for i in range(len(instr2)): 
-        if (instr2[i].opcode in arg_ops): 
-            print(f"{instr2[i].opcode} {instr2[i].arg}")
-        else: print(instr2[i].opcode)
+    pass
 if __name__ == "__main__": 
     main()
