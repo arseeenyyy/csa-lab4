@@ -109,13 +109,13 @@ def translate_stage_1(text: str):
     while i < len(terms):
         term = terms[i]
         
-        if term.word == ":":  
+        if term.word == ":":
             proc_name = terms[i+1].word
-            procedures_map[proc_name] = i
-            i += 2  
+            procedures_map[proc_name] = None
+            i += 2
             continue
             
-        elif term.word == "variable":  
+        elif term.word == "variable":
             var_name = terms[i+1].word
             if i+2 < len(terms) and re.fullmatch(dec_number_pattern, terms[i+2].word):
                 value = int(terms[i+2].word)
@@ -138,7 +138,8 @@ def translate_stage_1(text: str):
         if term.word == ":":
             proc_name = terms[i+1].word
             current_procedure = proc_name
-            i += 2  
+            procedures_map[proc_name] = address
+            i += 2
             continue
             
         elif term.word == "variable":
@@ -184,7 +185,7 @@ def translate_stage_1(text: str):
             code.append({
                 "address": address,
                 "opcode": Opcode.CALL,
-                "arg": procedures_map[term.word],
+                "arg": term.word,  
                 "term": term,
                 "size": ADDR_SIZE
             })

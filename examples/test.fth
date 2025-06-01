@@ -1,4 +1,3 @@
-
 : main
     10 20 +
     dup *
@@ -7,10 +6,8 @@
     dup dup drop drop
     x y
 ;
-
 variable x 
 variable y
-
 
 main  
 main2
