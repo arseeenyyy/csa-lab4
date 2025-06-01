@@ -1,11 +1,17 @@
-variable x
-variable y
 
 : main
-  10 x !
-  20 y !
-  x @ y @ + .
+    10 20 +
+    dup *
+;
+: main2
+    dup dup drop drop
+    x y
 ;
 
-main 
+variable x 
+variable y
+
+
+main  
+main2
 halt

@@ -132,13 +132,13 @@ class Term(namedtuple("Term", "line pos word")):
 
 
 def to_bytes(code): 
-    pass
+    pass 
 
 def to_hex(code): 
     pass
 
 def from_bytes(binary_code): 
-    pass
+    pass 
 
 def main():
     pass
