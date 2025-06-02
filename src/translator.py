@@ -100,6 +100,7 @@ def translate_stage_1(text: str):
     
     terms = text_2_terms(text)
     code = []
+    proc_code = []  
     
     variables_map.clear()
     procedures_map.clear()
@@ -111,7 +112,7 @@ def translate_stage_1(text: str):
         
         if term.word == ":":
             proc_name = terms[i+1].word
-            procedures_map[proc_name] = None
+            procedures_map[proc_name] = None  
             i += 2
             continue
             
@@ -129,7 +130,7 @@ def translate_stage_1(text: str):
         i += 1
     
     i = 0
-    address = 0
+    proc_address = 0  
     current_procedure = None
     
     while i < len(terms):
@@ -138,7 +139,7 @@ def translate_stage_1(text: str):
         if term.word == ":":
             proc_name = terms[i+1].word
             current_procedure = proc_name
-            procedures_map[proc_name] = address
+            procedures_map[proc_name] = proc_address  
             i += 2
             continue
             
@@ -146,111 +147,179 @@ def translate_stage_1(text: str):
             i += 2
             continue
             
-        elif re.fullmatch(hex_number_pattern, term.word):
+        if current_procedure is not None:
+            if re.fullmatch(hex_number_pattern, term.word):
+                arg = int(term.word, 16)
+                proc_code.append({
+                    "address": proc_address,
+                    "opcode": Opcode.LIT,
+                    "arg": arg,
+                    "term": term,
+                    "size": LIT_SIZE
+                })
+                proc_address += LIT_SIZE
+                
+            elif re.fullmatch(dec_number_pattern, term.word):
+                arg = int(term.word)
+                proc_code.append({
+                    "address": proc_address,
+                    "opcode": Opcode.LIT,
+                    "arg": arg,
+                    "term": term,
+                    "size": LIT_SIZE
+                })
+                proc_address += LIT_SIZE
+                
+            elif term.word == 'S"':
+                i += 1
+                string = terms[i].word.strip('"')
+                proc_code.append({
+                    "address": proc_address,
+                    "opcode": Opcode.LIT,
+                    "arg": string,
+                    "term": term,
+                    "size": LIT_SIZE
+                })
+                proc_address += LIT_SIZE
+                i += 1
+                
+            elif term.word == ";":
+                proc_code.append({
+                    "address": proc_address,
+                    "opcode": Opcode.RET,
+                    "term": term,
+                    "size": 1
+                })
+                proc_address += 1
+                current_procedure = None
+                
+            elif term.word in all_opcodes:
+                try:
+                    opcode = word_2_opcode(term.word)
+                    proc_code.append({
+                        "address": proc_address,
+                        "opcode": opcode,
+                        "term": term,
+                        "size": 1
+                    })
+                    proc_address += 1
+                except KeyError:
+                    raise ValueError(f"Unknown opcode: {term.word}")
+            
+            i += 1
+        else:
+            i += 1
+    i = 0
+    main_address = proc_address  
+    current_procedure = None
+    
+    while i < len(terms):
+        term = terms[i]
+        
+        if term.word == ":":
+            i += 2  
+            continue
+            
+        elif term.word == "variable":
+            i += 2
+            continue
+            
+        if any(t["term"] == term for t in proc_code if "term" in t):
+            i += 1
+            continue
+            
+        if re.fullmatch(hex_number_pattern, term.word):
             arg = int(term.word, 16)
             code.append({
-                "address": address,
+                "address": main_address,
                 "opcode": Opcode.LIT,
                 "arg": arg,
                 "term": term,
                 "size": LIT_SIZE
             })
-            address += LIT_SIZE
+            main_address += LIT_SIZE
             
         elif re.fullmatch(dec_number_pattern, term.word):
             arg = int(term.word)
             code.append({
-                "address": address,
+                "address": main_address,
                 "opcode": Opcode.LIT,
                 "arg": arg,
                 "term": term,
                 "size": LIT_SIZE
             })
-            address += LIT_SIZE
+            main_address += LIT_SIZE
             
         elif term.word == 'S"':
             i += 1
             string = terms[i].word.strip('"')
             code.append({
-                "address": address,
+                "address": main_address,
                 "opcode": Opcode.LIT,
                 "arg": string,
                 "term": term,
                 "size": LIT_SIZE
             })
-            address += LIT_SIZE
+            main_address += LIT_SIZE
             i += 1
             
-        elif term.word in procedures_map and term.word != current_procedure:
+        elif term.word in procedures_map:
             code.append({
-                "address": address,
+                "address": main_address,
                 "opcode": Opcode.CALL,
-                "arg": term.word,  
+                "arg": term.word,
                 "term": term,
                 "size": ADDR_SIZE
             })
-            address += ADDR_SIZE
+            main_address += ADDR_SIZE
             
         elif term.word in variables_queue:
             code.append({
-                "address": address,
+                "address": main_address,
                 "opcode": Opcode.LOAD_ADDR,
-                "arg": term.word,  
+                "arg": term.word,
                 "term": term,
                 "size": ADDR_SIZE
             })
-            address += ADDR_SIZE
+            main_address += ADDR_SIZE
             
-        elif term.word == ";":
-            if current_procedure:
+        elif term.word == "halt":
+            code.append({
+                "address": main_address,
+                "opcode": Opcode.HALT,
+                "term": term,
+                "size": 1
+            })
+            main_address += 1
+            
+            for var_name, value in variables_queue.items():
+                variables_map[var_name] = main_address
                 code.append({
-                    "address": address,
-                    "opcode": Opcode.RET,
-                    "term": term,
-                    "size": 1
+                    "address": main_address,
+                    "opcode": Opcode.VARIABLE,
+                    "arg": value,
+                    "term": None,
+                    "size": VAR_SIZE
                 })
-                address += 1
-                current_procedure = None
-            else:
-                raise ValueError("RET without procedure definition")
-            
+                main_address += VAR_SIZE
+                
         elif term.word in all_opcodes:
             try:
                 opcode = word_2_opcode(term.word)
-                
-                if opcode == Opcode.HALT:
-                    code.append({
-                        "address": address,
-                        "opcode": Opcode.HALT,
-                        "term": term,
-                        "size": 1
-                    })
-                    address += 1
-                    
-                    for var_name, value in variables_queue.items():
-                        variables_map[var_name] = address
-                        code.append({
-                            "address": address,
-                            "opcode": Opcode.VARIABLE,
-                            "arg": value,
-                            "term": None,
-                            "size": VAR_SIZE
-                        })
-                        address += VAR_SIZE
-                else:
-                    code.append({
-                        "address": address,
-                        "opcode": opcode,
-                        "term": term,
-                        "size": 1
-                    })
-                    address += 1
+                code.append({
+                    "address": main_address,
+                    "opcode": opcode,
+                    "term": term,
+                    "size": 1
+                })
+                main_address += 1
             except KeyError:
                 raise ValueError(f"Unknown opcode: {term.word}")
-                
+        
         i += 1
     
-    return code
+    full_code = proc_code + code
+    return full_code
 
 def translate_stage_2(code): 
     for instruction in code: 
