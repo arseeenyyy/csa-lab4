@@ -402,4 +402,3 @@ def main(source: str):
 if __name__ == "__main__": 
     main("examples/cat.fth")
 
-
