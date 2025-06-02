@@ -231,6 +231,7 @@ def translate_stage_1(text: str):
                         variables_map[var_name] = address
                         code.append({
                             "address": address,
+                            "opcode": Opcode.VARIABLE,
                             "arg": value,
                             "term": None,
                             "size": VAR_SIZE
@@ -251,6 +252,14 @@ def translate_stage_1(text: str):
     
     return code
 
+def translate_stage_2(code): 
+    for instruction in code: 
+        if instruction["opcode"] == Opcode.LOAD_ADDR: 
+            instruction["arg"] = variables_map[instruction["arg"]]
+        elif instruction["opcode"] == Opcode.CALL: 
+            instruction["arg"] = procedures_map[instruction["arg"]] 
+    return code
+
 def main(source: str):
     with open(source, encoding="utf-8") as file:
         text = file.read()
@@ -258,11 +267,10 @@ def main(source: str):
         print(variables_map) 
         print(procedures_map)
         print(variables_queue)
-        for term in code: 
-            print(term)
-        # final = translate_stage_2(code)
-        # for tr in final: 
-        #     print(tr)
+
+        code = translate_stage_2(code)
+        for tr in code: 
+            print(tr)
 
 if __name__ == "__main__": 
     main("examples/test.fth")
