@@ -6,12 +6,13 @@ import re
 variables_map = {}  
 procedures_map = {}  
 variables_queue = {}
+labels = {}
 ADDR_SIZE = 4    
 LIT_SIZE = 4     
 VAR_SIZE = 4 
 
 hex_number_pattern = r"^0[xX][0-9A-Fa-f]+$"
-dec_number_pattern = r"^[0-9]+$"
+dec_number_pattern = r"^-?[0-9]+$"
 
 def word_2_opcode(symbol: str) -> Opcode:
     try:
@@ -39,7 +40,7 @@ def word_2_opcode(symbol: str) -> Opcode:
             "emit": Opcode.EMIT,
             "key": Opcode.KEY,
             "if": Opcode.IF,
-            "else": Opcode.ELSE,
+            # "else": Opcode.ELSE,
             # "then": Opcode.THEN,
             "call": Opcode.CALL,
             "begin": Opcode.BEGIN,
@@ -81,6 +82,7 @@ def remove_comments(text: str) -> str:
             i += 1
     
     return ''.join(result)
+
 def text_2_terms(text: str):
     text = remove_comments(text) 
     terms = []
@@ -119,11 +121,10 @@ def text_2_terms(text: str):
                 raise SyntaxError(f"Unbalanced begin-until statement at line {terms[i].line}") 
             stack.pop()
             i += 1
-        elif token == Opcode.ELSE.value: 
-            if not stack or stack[-1][0] != Opcode.IF.value:  
-                raise SyntaxError(f"Unbalanced if-else-then statement at line {terms[i].line}") 
-            stack.pop()
-            i += 1
+        # elif token == Opcode.ELSE.value: 
+        #     if not stack or stack[-1][0] != Opcode.IF.value:  
+        #         raise SyntaxError(f"Unbalanced if-else statement at line {terms[i].line}") 
+        #     i += 1
         else: 
             i += 1
     
@@ -134,7 +135,7 @@ def text_2_terms(text: str):
     return terms
 
 def translate_stage_1(text: str):
-    global variables_map, procedures_map, variables_queue
+    global variables_map, procedures_map, variables_queue, labels
     
     terms = text_2_terms(text)
     code = []
@@ -156,12 +157,8 @@ def translate_stage_1(text: str):
             
         elif term.word == "variable":
             var_name = terms[i+1].word
-            if i+2 < len(terms) and re.fullmatch(dec_number_pattern, terms[i+2].word):
-                value = int(terms[i+2].word)
-                i += 3
-            else:
-                value = 0
-                i += 2
+            value = 0
+            i += 2
             variables_queue[var_name] = value
             continue
             
@@ -196,7 +193,6 @@ def translate_stage_1(text: str):
                     "size": LIT_SIZE
                 })
                 proc_address += LIT_SIZE
-                
             elif re.fullmatch(dec_number_pattern, term.word):
                 arg = int(term.word)
                 proc_code.append({
@@ -208,18 +204,18 @@ def translate_stage_1(text: str):
                 })
                 proc_address += LIT_SIZE
                 
-            elif term.word == 'S"':
-                i += 1
-                string = terms[i].word.strip('"')
-                proc_code.append({
-                    "address": proc_address,
-                    "opcode": Opcode.LIT,
-                    "arg": string,
-                    "term": term,
-                    "size": LIT_SIZE
-                })
-                proc_address += LIT_SIZE
-                i += 1
+            # elif term.word == 'S"':
+            #     i += 1
+            #     string = terms[i].word.strip('"')
+            #     proc_code.append({
+            #         "address": proc_address,
+            #         "opcode": Opcode.LIT,
+            #         "arg": string,
+            #         "term": term,
+            #         "size": LIT_SIZE
+            #     })
+            #     proc_address += LIT_SIZE
+            #     i += 1
                 
             elif term.word == ";":
                 proc_code.append({
@@ -377,18 +373,16 @@ def get_first_executable(code):
 def main(source: str):
     with open(source, encoding="utf-8") as file:
         text = file.read()
-        terms = text_2_terms(text)
-        print(terms)
-        # code = translate_stage_1(text)
-        # print(variables_map) 
-        # print(procedures_map)
-        # print(variables_queue)
+        code = translate_stage_1(text)
+        print(variables_map) 
+        print(procedures_map)
+        print(variables_queue)
 
-        # code = translate_stage_2(code)
-        # for tr in code: 
-        #     print(tr)
-        # print(get_first_executable(code))
+        code = translate_stage_2(code)
+        for tr in code: 
+            print(tr)
+        print(get_first_executable(code))
 
 if __name__ == "__main__": 
-    main("examples/cat.fth")
+    main("examples/test2.fth")
 
