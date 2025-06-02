@@ -1,2 +1,2 @@
-: hello ." Hello world!" ;
-hello
+5 10 +
+dup *

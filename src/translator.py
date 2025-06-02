@@ -329,6 +329,13 @@ def translate_stage_2(code):
             instruction["arg"] = procedures_map[instruction["arg"]] 
     return code
 
+def get_first_executable(code): 
+    addr = 0
+    for instr in code: 
+        if instr["opcode"] == Opcode.RET: 
+            addr = instr["address"] + 1
+    return addr
+
 def main(source: str):
     with open(source, encoding="utf-8") as file:
         text = file.read()
@@ -340,6 +347,7 @@ def main(source: str):
         code = translate_stage_2(code)
         for tr in code: 
             print(tr)
+        print(get_first_executable(code))
 
 if __name__ == "__main__": 
     main("examples/test.fth")
