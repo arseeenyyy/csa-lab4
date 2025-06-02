@@ -13,47 +13,46 @@ VAR_SIZE = 4
 hex_number_pattern = r"^0[xX][0-9A-Fa-f]+$"
 dec_number_pattern = r"^[0-9]+$"
 
-
-# def instruction_size(instr: Instruction) -> int:
-#     return 4 if instr.opcode in {Opcode.LIT, Opcode.CALL, Opcode.LOAD_ADDR} else 1
-
 def word_2_opcode(symbol: str) -> Opcode:
-    return {
-        "dup": Opcode.DUP,
-        "drop": Opcode.DROP,
-        "swap": Opcode.SWAP,
-        "over": Opcode.OVER,
-        "lit": Opcode.LIT,
-        "+": Opcode.ADD,
-        "-": Opcode.SUB,
-        "*": Opcode.MUL,
-        "/": Opcode.DIV,
-        "mod": Opcode.MOD,
-        "and": Opcode.AND,
-        "or": Opcode.OR,
-        "xor": Opcode.XOR,
-        "=": Opcode.EQ,
-        "<": Opcode.LT,
-        ">": Opcode.GT,
-        "!": Opcode.STORE,
-        "@": Opcode.FETCH,
-        "variable": Opcode.VARIABLE,
-        ".": Opcode.PRINT_INT,
-        "emit": Opcode.EMIT,
-        "key": Opcode.KEY,
-        "if": Opcode.IF,
-        "else": Opcode.ELSE,
-        "then": Opcode.THEN,
-        "do": Opcode.DO,
-        "loop": Opcode.LOOP,
-        "call": Opcode.CALL,
-        "begin": Opcode.BEGIN,
-        "until": Opcode.UNTIL,
-        "load_addr": Opcode.LOAD_ADDR,
-        ";": Opcode.RET,
-        "halt": Opcode.HALT,
-        "nop": Opcode.NOP
-    }[symbol]
+    try:
+        return {
+            "dup": Opcode.DUP,
+            "drop": Opcode.DROP,
+            "swap": Opcode.SWAP,
+            "over": Opcode.OVER,
+            "lit": Opcode.LIT,
+            "+": Opcode.ADD,
+            "-": Opcode.SUB,
+            "*": Opcode.MUL,
+            "/": Opcode.DIV,
+            "mod": Opcode.MOD,
+            "and": Opcode.AND,
+            "or": Opcode.OR,
+            "xor": Opcode.XOR,
+            "=": Opcode.EQ,
+            "<": Opcode.LT,
+            ">": Opcode.GT,
+            "!": Opcode.STORE,
+            "@": Opcode.FETCH,
+            "variable": Opcode.VARIABLE,
+            ".": Opcode.PRINT_INT,
+            "emit": Opcode.EMIT,
+            "key": Opcode.KEY,
+            "if": Opcode.IF,
+            "else": Opcode.ELSE,
+            "then": Opcode.THEN,
+            "do": Opcode.DO,
+            "loop": Opcode.LOOP,
+            "call": Opcode.CALL,
+            "begin": Opcode.BEGIN,
+            "until": Opcode.UNTIL,
+            "load_addr": Opcode.LOAD_ADDR,
+            ";": Opcode.RET,
+            "halt": Opcode.HALT,
+            "nop": Opcode.NOP
+        }[symbol]
+    except KeyError: 
+        return None
 
 all_opcodes = {opcode.value for opcode in Opcode}
 
@@ -84,7 +83,6 @@ def remove_comments(text: str) -> str:
             i += 1
     
     return ''.join(result)
-
 def text_2_terms(text: str):
     text = remove_comments(text) 
     terms = []
@@ -92,7 +90,57 @@ def text_2_terms(text: str):
         words = line.strip().split()
         for pos, word in enumerate(words, 1): 
             terms.append(Term(line_num, pos, word))  
-    # TODO (check closing bracket)  
+    
+    stack = []
+    i = 0
+    while i < len(terms): 
+        token = terms[i].word
+        if token == ":": 
+            stack.append((":", i)) 
+            if i + 1 < len(terms) and word_2_opcode(terms[i + 1].word) is not None: 
+                raise SyntaxError(f"Invalid procedure name: '{terms[i + 1].word}'")  
+            i += 2
+        elif token == Opcode.IF.value: 
+            stack.append((Opcode.IF.value, i)) 
+            i += 1
+        elif token == Opcode.BEGIN.value: 
+            stack.append((Opcode.BEGIN.value, i)) 
+            i += 1
+        elif token == Opcode.DO.value: 
+            stack.append((Opcode.DO.value, i)) 
+            i += 1
+        elif token == Opcode.RET.value: 
+            if not stack or stack[-1][0] != ":": 
+                raise SyntaxError(f"Unbalanced procedure (missing ':' for ';')")
+            stack.pop()
+            i += 1
+        elif token == Opcode.THEN.value: 
+            if not stack or stack[-1][0] != Opcode.IF.value:  
+                raise SyntaxError(f"Unbalanced if-then statement at line {terms[i].line}") 
+            stack.pop()
+            i += 1
+        elif token == Opcode.UNTIL.value:
+            if not stack or stack[-1][0] != Opcode.BEGIN.value:
+                raise SyntaxError(f"Unbalanced begin-until statement at line {terms[i].line}") 
+            stack.pop()
+            i += 1
+        elif token == Opcode.LOOP.value: 
+            if not stack or stack[-1][0] != Opcode.DO.value:  
+                raise SyntaxError(f"Unbalanced do-loop statement at line {terms[i].line}") 
+            stack.pop()
+            i += 1
+        elif token == Opcode.ELSE.value: 
+            if not stack or stack[-1][0] != Opcode.IF.value:  
+                raise SyntaxError(f"Unbalanced if-else-then statement at line {terms[i].line}") 
+            stack.pop()
+            i += 1
+        else: 
+            i += 1
+    
+    if stack: 
+        token, pos = stack[-1] 
+        raise SyntaxError(f"Unbalanced '{token}' at line {terms[pos].line}")
+
     return terms
 
 def translate_stage_1(text: str):
@@ -339,17 +387,19 @@ def get_first_executable(code):
 def main(source: str):
     with open(source, encoding="utf-8") as file:
         text = file.read()
-        code = translate_stage_1(text)
-        print(variables_map) 
-        print(procedures_map)
-        print(variables_queue)
+        terms = text_2_terms(text)
+        print(terms)
+        # code = translate_stage_1(text)
+        # print(variables_map) 
+        # print(procedures_map)
+        # print(variables_queue)
 
-        code = translate_stage_2(code)
-        for tr in code: 
-            print(tr)
-        print(get_first_executable(code))
+        # code = translate_stage_2(code)
+        # for tr in code: 
+        #     print(tr)
+        # print(get_first_executable(code))
 
 if __name__ == "__main__": 
-    main("examples/test.fth")
+    main("examples/cat.fth")
 
 
