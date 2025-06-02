@@ -40,9 +40,7 @@ def word_2_opcode(symbol: str) -> Opcode:
             "key": Opcode.KEY,
             "if": Opcode.IF,
             "else": Opcode.ELSE,
-            "then": Opcode.THEN,
-            "do": Opcode.DO,
-            "loop": Opcode.LOOP,
+            # "then": Opcode.THEN,
             "call": Opcode.CALL,
             "begin": Opcode.BEGIN,
             "until": Opcode.UNTIL,
@@ -106,9 +104,6 @@ def text_2_terms(text: str):
         elif token == Opcode.BEGIN.value: 
             stack.append((Opcode.BEGIN.value, i)) 
             i += 1
-        elif token == Opcode.DO.value: 
-            stack.append((Opcode.DO.value, i)) 
-            i += 1
         elif token == Opcode.RET.value: 
             if not stack or stack[-1][0] != ":": 
                 raise SyntaxError(f"Unbalanced procedure (missing ':' for ';')")
@@ -122,11 +117,6 @@ def text_2_terms(text: str):
         elif token == Opcode.UNTIL.value:
             if not stack or stack[-1][0] != Opcode.BEGIN.value:
                 raise SyntaxError(f"Unbalanced begin-until statement at line {terms[i].line}") 
-            stack.pop()
-            i += 1
-        elif token == Opcode.LOOP.value: 
-            if not stack or stack[-1][0] != Opcode.DO.value:  
-                raise SyntaxError(f"Unbalanced do-loop statement at line {terms[i].line}") 
             stack.pop()
             i += 1
         elif token == Opcode.ELSE.value: 

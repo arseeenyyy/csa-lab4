@@ -32,9 +32,7 @@ class Opcode(str, Enum):
     # flow control
     IF = "if"
     ELSE = "else"
-    THEN = "then"
-    DO = "do"
-    LOOP = "loop"
+    # THEN = "then"
     CALL = "call"
     BEGIN = "begin"
     UNTIL = "until"
@@ -73,12 +71,10 @@ opcode_to_binary = {
     # Opcode.PRINT_STRING: 0x33,
     Opcode.IF: 0x40,
     Opcode.ELSE: 0x41,
-    Opcode.THEN: 0x42,
-    Opcode.DO: 0x43,
-    Opcode.LOOP: 0x44,
-    Opcode.CALL: 0x45,
-    Opcode.BEGIN: 0x46,
-    Opcode.UNTIL: 0x47,
+    # Opcode.THEN: 0x42,
+    Opcode.CALL: 0x42,
+    Opcode.BEGIN: 0x43,
+    Opcode.UNTIL: 0x44,
     Opcode.LOAD_ADDR: 0x50,
     Opcode.RET: 0xFE,
     Opcode.HALT: 0xFF,
@@ -111,11 +107,10 @@ binary_to_opcode = {
     # 0x33: Opcode.PRINT_STRING,
     0x40: Opcode.IF,
     0x41: Opcode.ELSE,
-    0x42: Opcode.THEN,
-    0x43: Opcode.DO,
-    0x44: Opcode.LOOP,
-    0x45: Opcode.CALL,
-    0x46: Opcode.BEGIN, 
+    # 0x42: Opcode.THEN,
+    0x42: Opcode.CALL,
+    0x43: Opcode.BEGIN, 
+    0x44: Opcode.UNTIL,
     0x50: Opcode.LOAD_ADDR,
     0x47: Opcode.UNTIL,
     0xFE: Opcode.RET,
