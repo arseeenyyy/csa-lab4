@@ -121,10 +121,6 @@ def text_2_terms(text: str):
                 raise SyntaxError(f"Unbalanced begin-until statement at line {terms[i].line}") 
             stack.pop()
             i += 1
-        # elif token == Opcode.ELSE.value: 
-        #     if not stack or stack[-1][0] != Opcode.IF.value:  
-        #         raise SyntaxError(f"Unbalanced if-else statement at line {terms[i].line}") 
-        #     i += 1
         else: 
             i += 1
     
@@ -133,14 +129,14 @@ def text_2_terms(text: str):
         raise SyntaxError(f"Unbalanced '{token}' at line {terms[pos].line}")
 
     return terms
-
 def translate_stage_1(text: str):
     global variables_map, procedures_map, variables_queue, labels
     
     terms = text_2_terms(text)
     code = []
     proc_code = []  
-    
+    if_stack = []  
+
     variables_map.clear()
     procedures_map.clear()
     variables_queue.clear()
@@ -203,20 +199,22 @@ def translate_stage_1(text: str):
                     "size": LIT_SIZE
                 })
                 proc_address += LIT_SIZE
-                
-            # elif term.word == 'S"':
-            #     i += 1
-            #     string = terms[i].word.strip('"')
-            #     proc_code.append({
-            #         "address": proc_address,
-            #         "opcode": Opcode.LIT,
-            #         "arg": string,
-            #         "term": term,
-            #         "size": LIT_SIZE
-            #     })
-            #     proc_address += LIT_SIZE
-            #     i += 1
-                
+            elif term.word == "if":
+                proc_code.append({
+                    "address": proc_address,
+                    "opcode": Opcode.IF,
+                    "arg": None,  
+                    "term": term,
+                    "size": ADDR_SIZE
+                })
+                if_stack.append(len(proc_code) - 1)  
+                proc_address += ADDR_SIZE
+            elif term.word == "then":
+                if not if_stack:
+                    raise SyntaxError(f"Unbalanced 'then' at line {term.line}")
+                if_index = if_stack.pop()
+                offset = proc_address - proc_code[if_index]["address"]
+                proc_code[if_index]["arg"] = offset
             elif term.word == ";":
                 proc_code.append({
                     "address": proc_address,
@@ -226,7 +224,6 @@ def translate_stage_1(text: str):
                 })
                 proc_address += 1
                 current_procedure = None
-                
             elif term.word in all_opcodes:
                 try:
                     opcode = word_2_opcode(term.word)
@@ -238,11 +235,11 @@ def translate_stage_1(text: str):
                     })
                     proc_address += 1
                 except KeyError:
-                    raise ValueError(f"Unknown opcode: {term.word}")
-            
+                    raise ValueError(f"Unknown opcode: {term.word} at line {term.line}")
             i += 1
         else:
             i += 1
+    
     i = 0
     main_address = proc_address  
     current_procedure = None
@@ -272,7 +269,6 @@ def translate_stage_1(text: str):
                 "size": LIT_SIZE
             })
             main_address += LIT_SIZE
-            
         elif re.fullmatch(dec_number_pattern, term.word):
             arg = int(term.word)
             code.append({
@@ -283,20 +279,22 @@ def translate_stage_1(text: str):
                 "size": LIT_SIZE
             })
             main_address += LIT_SIZE
-            
-        elif term.word == 'S"':
-            i += 1
-            string = terms[i].word.strip('"')
+        elif term.word == "if":
             code.append({
                 "address": main_address,
-                "opcode": Opcode.LIT,
-                "arg": string,
+                "opcode": Opcode.IF,
+                "arg": None,  
                 "term": term,
-                "size": LIT_SIZE
+                "size": ADDR_SIZE
             })
-            main_address += LIT_SIZE
-            i += 1
-            
+            if_stack.append(len(code) - 1)  
+            main_address += ADDR_SIZE
+        elif term.word == "then":
+            if not if_stack:
+                raise SyntaxError(f"Unbalanced 'then' at line {term.line}")
+            if_index = if_stack.pop()
+            offset = main_address - code[if_index]["address"]
+            code[if_index]["arg"] = offset
         elif term.word in procedures_map:
             code.append({
                 "address": main_address,
@@ -306,7 +304,6 @@ def translate_stage_1(text: str):
                 "size": ADDR_SIZE
             })
             main_address += ADDR_SIZE
-            
         elif term.word in variables_queue:
             code.append({
                 "address": main_address,
@@ -316,7 +313,6 @@ def translate_stage_1(text: str):
                 "size": ADDR_SIZE
             })
             main_address += ADDR_SIZE
-            
         elif term.word == "halt":
             code.append({
                 "address": main_address,
@@ -336,7 +332,6 @@ def translate_stage_1(text: str):
                     "size": VAR_SIZE
                 })
                 main_address += VAR_SIZE
-                
         elif term.word in all_opcodes:
             try:
                 opcode = word_2_opcode(term.word)
@@ -348,12 +343,16 @@ def translate_stage_1(text: str):
                 })
                 main_address += 1
             except KeyError:
-                raise ValueError(f"Unknown opcode: {term.word}")
+                raise ValueError(f"Unknown opcode: {term.word} at line {term.line}")
         
         i += 1
     
+    if if_stack:
+        raise SyntaxError(f"Unbalanced 'if' at line {terms[if_stack[-1]].line}")
+    
     full_code = proc_code + code
     return full_code
+
 
 def translate_stage_2(code): 
     for instruction in code: 
