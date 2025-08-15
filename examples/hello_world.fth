@@ -1,5 +1,6 @@
-: main
-1 0 = if 1 . then
+variable str "Hello world!" 
+: print_str
+str
+begin 
+@ 
 ;
-main
-halt

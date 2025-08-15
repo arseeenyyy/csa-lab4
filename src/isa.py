@@ -25,9 +25,8 @@ class Opcode(str, Enum):
     FETCH = "@"
     VARIABLE = "variable"
     # input output
-    PRINT_INT = "."
-    EMIT = "emit"
-    KEY = "key"
+    IN = "in" 
+    OUT = "out"
     # PRINT_STRING = '."'
     # flow control
     IF = "if"
@@ -65,9 +64,11 @@ opcode_to_binary = {
     Opcode.STORE: 0x20,
     Opcode.FETCH: 0x21,
     Opcode.VARIABLE: 0x22,
-    Opcode.PRINT_INT: 0x30,
-    Opcode.EMIT: 0x31,
-    Opcode.KEY: 0x32,
+    # Opcode.PRINT_INT: 0x30,
+    # Opcode.EMIT: 0x31,
+    # Opcode.KEY: 0x32,
+    Opcode.IN: 0x30, 
+    Opcode.OUT: 0x31,
     # Opcode.PRINT_STRING: 0x33,
     Opcode.IF: 0x40,
     # Opcode.ELSE: 0x41,
@@ -101,9 +102,11 @@ binary_to_opcode = {
     0x20: Opcode.STORE,
     0x21: Opcode.FETCH,
     0x22: Opcode.VARIABLE,
-    0x30: Opcode.PRINT_INT,
-    0x31: Opcode.EMIT,
-    0x32: Opcode.KEY,
+    # 0x30: Opcode.PRINT_INT,
+    # 0x31: Opcode.EMIT,
+    # 0x32: Opcode.KEY,
+    0x30: Opcode.IN, 
+    0x31: Opcode.OUT,
     # 0x33: Opcode.PRINT_STRING,
     0x40: Opcode.IF,
     # 0x41: Opcode.ELSE,

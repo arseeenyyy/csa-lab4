@@ -105,7 +105,7 @@
   - `do loop`
   - `!` - store the second value of the stack by address on the top of the stack
   - `@`- push the value on the stack from address on the top of the stack
-  - `key`
+  - `in <port>` - print top value of the stack
   - `.`
   - `." <str>"`
   - `emit` 
